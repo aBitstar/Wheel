@@ -1,12 +1,14 @@
 import { Box, Flex, Icon, Text, useColorModeValue } from "@chakra-ui/react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
-import { FiBriefcase, FiHome, FiSettings, FiUsers } from "react-icons/fi"
+import { FiBriefcase, FiHome, FiMail, FiSettings, FiShield, FiUsers,  } from "react-icons/fi"
 
 import type { UserPublic } from "../../client"
 
 const items = [
   { icon: FiHome, title: "Dashboard", path: "/" },
+  { icon: FiUsers, title: "Users", path: "/user" },
+  { icon: FiMail, title: "Requests", path: "/requests" },
   { icon: FiBriefcase, title: "Items", path: "/items" },
   { icon: FiSettings, title: "User Settings", path: "/settings" },
 ]
@@ -22,7 +24,7 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
   const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
 
   const finalItems = currentUser?.is_superuser
-    ? [...items, { icon: FiUsers, title: "Admin", path: "/admin" }]
+    ? [...items, { icon: FiShield, title: "Admin", path: "/admin" }]
     : items
 
   const listItems = finalItems.map(({ icon, title, path }) => (

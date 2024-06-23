@@ -1,3 +1,4 @@
+from pathlib import Path
 import secrets
 import warnings
 from typing import Annotated, Any, Literal
@@ -22,10 +23,13 @@ def parse_cors(v: Any) -> list[str] | str:
         return v
     raise ValueError(v)
 
+# Define the path to the .env file located at ../../.env
+ENV_FILE_PATH = Path(__file__).resolve().parent.parent.parent.parent / ".env"
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", env_ignore_empty=True, extra="ignore"
+        env_file=str(ENV_FILE_PATH), env_ignore_empty=True, extra="ignore"
     )
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
@@ -44,7 +48,7 @@ class Settings(BaseSettings):
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)
-    ] = []
+    ] = ['http://localhost:5173']
 
     PROJECT_NAME: str
     SENTRY_DSN: HttpUrl | None = None

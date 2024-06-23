@@ -1,3 +1,4 @@
+from typing import List
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -43,6 +44,8 @@ class User(UserBase, table=True):
     hashed_password: str
     items: list["Item"] = Relationship(back_populates="owner")
 
+    sent_requests: List["FriendRequest"] = Relationship(back_populates="sender", sa_relationship_kwargs={"foreign_keys": "[FriendRequest.sender_id]"})
+    received_requests: List["FriendRequest"] = Relationship(back_populates="receiver", sa_relationship_kwargs={"foreign_keys": "[FriendRequest.receiver_id]"})
 
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
@@ -108,3 +111,18 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
+
+
+# Friend Request
+class FriendRequestBase(SQLModel):
+    sender_id: int
+    receiver_id: int
+
+
+class FriendRequest(FriendRequestBase, table=True):
+    id: int = Field(default=None, primary_key=True, index=True)
+    sender_id: int = Field(foreign_key="user.id")
+    receiver_id: int = Field(foreign_key="user.id")
+    status: str = Field(enumerate(['accepted', 'rejected', 'pending']))
+    sender: User = Relationship(back_populates="sent_requests", sa_relationship_kwargs={"foreign_keys": "[FriendRequest.sender_id]"})
+    receiver: User = Relationship(back_populates="received_requests", sa_relationship_kwargs={"foreign_keys": "[FriendRequest.receiver_id]"})

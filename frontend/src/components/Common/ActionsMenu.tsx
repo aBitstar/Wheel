@@ -12,6 +12,7 @@ import { FiEdit, FiTrash } from "react-icons/fi"
 import type { ItemPublic, UserPublic } from "../../client"
 import EditUser from "../Admin/EditUser"
 import EditItem from "../Items/EditItem"
+import ViewUser from "../User/ViewUser"
 import Delete from "./DeleteAlert"
 
 interface ActionsMenuProps {
@@ -50,6 +51,12 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
         </MenuList>
         {type === "User" ? (
           <EditUser
+            user={value as UserPublic}
+            isOpen={editUserModal.isOpen}
+            onClose={editUserModal.onClose}
+          />
+        ) : type === "ViewUser" ? (
+          <ViewUser
             user={value as UserPublic}
             isOpen={editUserModal.isOpen}
             onClose={editUserModal.onClose}

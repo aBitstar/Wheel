@@ -130,3 +130,15 @@ export type ValidationError = {
 	type: string;
 };
 
+// Type for friend request service
+export type FriendRequest = {
+	sender_id: number;
+	receiver_id: number;
+	status: string;
+	id: number;
+	sender_name: string;
+	sender_email: string;
+};
+
+export type FriendRequests = Array<FriendRequest>;
+

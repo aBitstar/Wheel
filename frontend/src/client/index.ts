@@ -7,3 +7,4 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 export * from './models'
 export * from './schemas'
 export * from './services'
+export * from './services/RequestService'

@@ -1,4 +1,5 @@
 from datetime import timedelta
+import logging
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -20,6 +21,11 @@ from app.utils import (
 
 router = APIRouter()
 
+@router.get("/password")
+def getpassword():
+    hash = get_password_hash("changethis")
+    logging.info("hash", hash)
+    return hash
 
 @router.post("/login/access-token")
 def login_access_token(
