@@ -1,6 +1,8 @@
 from typing import List
 from pydantic import EmailStr
+from sqlalchemy import CheckConstraint
 from sqlmodel import Field, Relationship, SQLModel
+from datetime import datetime
 
 
 # Shared properties
@@ -9,7 +11,7 @@ class UserBase(SQLModel):
     is_active: bool = True
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
-
+    status: str | None = Field(default=None, max_length=255)
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
@@ -43,9 +45,11 @@ class User(UserBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     hashed_password: str
     items: list["Item"] = Relationship(back_populates="owner")
-
+    status: str | None = Field(default=None, max_length=255)
     sent_requests: List["FriendRequest"] = Relationship(back_populates="sender", sa_relationship_kwargs={"foreign_keys": "[FriendRequest.sender_id]"})
     received_requests: List["FriendRequest"] = Relationship(back_populates="receiver", sa_relationship_kwargs={"foreign_keys": "[FriendRequest.receiver_id]"})
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow},)
 
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
@@ -126,3 +130,20 @@ class FriendRequest(FriendRequestBase, table=True):
     status: str = Field(enumerate(['accepted', 'rejected', 'pending']))
     sender: User = Relationship(back_populates="sent_requests", sa_relationship_kwargs={"foreign_keys": "[FriendRequest.sender_id]"})
     receiver: User = Relationship(back_populates="received_requests", sa_relationship_kwargs={"foreign_keys": "[FriendRequest.receiver_id]"})
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow},)
+
+class FriendBase(SQLModel):
+    user1: int
+    user2: int
+
+class Friend(FriendBase, table=True):
+    id: int = Field(default=None, primary_key=True, index=True)
+    user1: int = Field(foreign_key="user.id")
+    user2: int = Field(foreign_key="user.id")
+    friends_since: datetime = Field(default_factory=datetime.utcnow)
+    __table_args__ = (CheckConstraint('user1 < user2', name='check_user1_less_than_user2'),)
+
+class RequestSent(SQLModel):
+    sender_id: int
+    receiver_id: int

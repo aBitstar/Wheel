@@ -1,31 +1,30 @@
-import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.models import FriendRequest, User
+from app.models import FriendRequest, RequestSent, User
 
 router = APIRouter()
 
 @router.post('/send-request')
-def sendRequest(sender_id: int, receiver_id: int, session: SessionDep):
-    if sender_id == receiver_id:
+def sendRequest(request: RequestSent, session: SessionDep):
+    if request.sender_id == request.receiver_id:
         raise HTTPException(status_code=400, detail="You can't send request to yourself")
     # Check if sender or receiver exists
-    from_user = session.get(User, sender_id)
-    to_user = session.get(User, receiver_id)
+    from_user = session.get(User, request.sender_id)
+    to_user = session.get(User, request.receiver_id)
 
     if not from_user or not to_user:
         raise HTTPException(status_code=404, detail="User not found")
     # Check if the request exists
     existing_request = session.exec(select(FriendRequest).where(
-        FriendRequest.sender_id == sender_id,
-        FriendRequest.receiver_id == receiver_id
+        FriendRequest.sender_id == request.sender_id,
+        FriendRequest.receiver_id == request.receiver_id
     )).first()
     if existing_request:
         raise HTTPException(status_code=400, detail="Friend request already sent")
     
-    friend_request = FriendRequest(sender_id=sender_id, receiver_id=receiver_id, status="pending")
+    friend_request = FriendRequest(sender_id=request.sender_id, receiver_id=request.receiver_id, status="pending")
     session.add(friend_request)
     session.commit()
     session.refresh(friend_request)

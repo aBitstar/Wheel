@@ -14,69 +14,67 @@ import {
     StackDivider,
   } from "@chakra-ui/react"
   import { useMutation, useQueryClient } from "@tanstack/react-query"
-  import { type SubmitHandler, useForm } from "react-hook-form"
   
   import {
     type ApiError,
     type UserPublic,
-    type UserUpdate,
-    UsersService,
+    type SendRequest,
+    RequestService,
   } from "../../client"
   import useCustomToast from "../../hooks/useCustomToast"
+
   
-  interface EditUserProps {
+  interface ViewUserProps {
     user: UserPublic
     isOpen: boolean
     onClose: () => void
   }
   
-  interface UserUpdateForm extends UserUpdate {
-    confirm_password: string
-  }
-  
-  const ViewUser = ({ user, isOpen, onClose }: EditUserProps) => {
+  const ViewUser = ({ user, isOpen, onClose }: ViewUserProps) => {
     const queryClient = useQueryClient()
     const showToast = useCustomToast()
+    const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
 
   
-    const {
-      register,
-      handleSubmit,
-      reset,
-      getValues,
-      formState: { errors, isSubmitting, isDirty },
-    } = useForm<UserUpdateForm>({
-      mode: "onBlur",
-      criteriaMode: "all",
-      defaultValues: user,
-    })
+    // const {
+    //   register,
+    //   handleSubmit,
+    //   reset,
+    //   getValues,
+    //   formState: { isSubmitting },
+    // } = useForm<UserUpdateForm>({
+    //   mode: "onBlur",
+    //   criteriaMode: "all",
+    //   defaultValues: user,
+    // })
   
     const mutation = useMutation({
-      mutationFn: (data: UserUpdateForm) =>
-        UsersService.updateUser({ userId: user.id, requestBody: data }),
+      mutationFn: (data: SendRequest) =>
+        RequestService.sendRequest(data),
       onSuccess: () => {
-        showToast("Success!", "User updated successfully.", "success")
+        showToast("Success!", "Friend Request Sent successfully.", "success")
+        // reset()
         onClose()
       },
       onError: (err: ApiError) => {
         const errDetail = (err.body as any)?.detail
         showToast("Something went wrong.", `${errDetail}`, "error")
+        onClose()
       },
       onSettled: () => {
-        queryClient.invalidateQueries({ queryKey: ["users"] })
+        queryClient.invalidateQueries({ queryKey: ["friend_requests"] })
       },
     })
   
-    const onSubmit: SubmitHandler<UserUpdateForm> = async (data) => {
-      if (data.password === "") {
-        data.password = undefined
-      }
-      mutation.mutate(data)
-    }
-  
     const onCancel = () => {
-      reset()
+      // reset()
       onClose()
+    }
+
+    const sendRequest = (receiver_id: number) => {
+      mutation.mutate(
+        {sender_id: currentUser?.id, receiver_id: receiver_id}
+      )
     }
   
     return (
@@ -89,7 +87,7 @@ import {
         >
           <ModalOverlay />
           <ModalContent>
-            <ModalHeader>User Information</ModalHeader>
+            <ModalHeader>{user.id === currentUser?.id ? 'Your ' : 'User '} Information</ModalHeader>
             <ModalCloseButton />
             <ModalBody pb={6}>
                 <VStack
@@ -113,13 +111,15 @@ import {
             </ModalBody>
   
             <ModalFooter gap={3}>
-              <Button
-                variant="primary"
-                type="submit"
-                isLoading={isSubmitting}
-              >
-                Send Friend Request
-              </Button>
+                {user.id !== currentUser?.id &&
+                    <Button
+                        variant="primary"
+                        type="submit"
+                        onClick={() => sendRequest(user.id)}
+                    >
+                        Send Friend Request
+                    </Button>
+                }
               <Button onClick={onCancel}>Cancel</Button>
             </ModalFooter>
           </ModalContent>

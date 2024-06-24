@@ -5,6 +5,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
 from app.core.config import settings
+from app.websocket.websocket import websocket_endpoint
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -33,3 +34,4 @@ if settings.BACKEND_CORS_ORIGINS:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+app.add_websocket_route("/ws", websocket_endpoint)

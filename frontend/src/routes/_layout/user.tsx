@@ -19,7 +19,6 @@ import {
   
   import { Suspense, useState } from "react"
   import { type UserPublic, UsersService } from "../../client"
-  import ActionsMenu from "../../components/Common/ActionsMenu"
   import ViewUser from "../../components/User/ViewUser"
   
   export const Route = createFileRoute("/_layout/user")({
@@ -70,13 +69,6 @@ import {
                   {user.is_active ? "Active" : "Inactive"}
                 </Flex>
               </Td>
-              <Td>
-                <ActionsMenu
-                  type="User"
-                  value={user}
-                  disabled={currentUser?.id === user.id ? true : false}
-                />
-              </Td>
             </Tr>
           ))}
         </Tbody>
@@ -117,7 +109,6 @@ import {
                 <Th width="50%">Email</Th>
                 <Th width="10%">Role</Th>
                 <Th width="10%">Status</Th>
-                <Th width="10%">Actions</Th>
               </Tr>
             </Thead>
             <Suspense fallback={<MembersBodySkeleton />}>

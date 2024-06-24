@@ -142,3 +142,8 @@ export type FriendRequest = {
 
 export type FriendRequests = Array<FriendRequest>;
 
+export type SendRequest = {
+	sender_id: number | undefined;
+	receiver_id: number;
+}
+

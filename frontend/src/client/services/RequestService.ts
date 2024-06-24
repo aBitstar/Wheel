@@ -1,5 +1,5 @@
 import type { CancelablePromise } from "../core/CancelablePromise";
-import { FriendRequests } from "../models";
+import { FriendRequests, SendRequest } from "../models";
 import { request as __request } from '../core/request';
 import { OpenAPI } from '../core/OpenAPI';
 
@@ -19,4 +19,19 @@ export class RequestService {
       },
     });
   }
+
+  public static sendRequest( data: SendRequest): CancelablePromise<FriendRequests> {
+    return __request(OpenAPI, {
+      method: "POST",
+      body: data,
+      url: "/api/v1/friend/send-request",
+      errors: {
+        422: `Validation Error`,
+      },
+    });
+  }
 }
+
+export type NewFriendRequest = {
+  requestBody: SendRequest;
+};
