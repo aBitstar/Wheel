@@ -11,7 +11,7 @@
     - 🎨 [Chakra UI](https://chakra-ui.com) for the frontend components.
     - 🤖 An automatically generated frontend client.
     - 🦇 Dark mode support.
-- ![Websocket](https://user-images.githubusercontent.com/25181517/187070862-03888f18-2e63-4332-95fb-3ba4f2708e59.png)[Web Socket](https://websocket.org) for real time updates and notifications.
+- 🔨 [Web Socket](https://websocket.org) for real time updates and notifications.
 - 🐋 [Docker Compose](https://www.docker.com) for development and production.
 - 🔒 Secure password hashing by default.
 - 🔑 JWT (JSON Web Token) authentication.
