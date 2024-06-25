@@ -1,8 +1,6 @@
 import {
     Badge,
-    Box,
     Container,
-    Flex,
     Heading,
     SkeletonText,
     Table,
@@ -18,10 +16,10 @@ import {
   import { createFileRoute } from "@tanstack/react-router"
   
   import { Suspense, useState } from "react"
-  import { type UserPublic, UsersService } from "../../client"
+  import { type UserPublic, RequestService } from "../../client"
   import ViewUser from "../../components/User/ViewUser"
   
-  export const Route = createFileRoute("/_layout/user")({
+  export const Route = createFileRoute("/_layout/friends")({
     component: User,
   })
   
@@ -31,8 +29,8 @@ import {
     const [selectedUser, setSelectedUser] = useState({});
   
     const { data: users } = useSuspenseQuery({
-      queryKey: ["users"],
-      queryFn: () => UsersService.readUsers({}),
+      queryKey: ["friends"],
+      queryFn: () => RequestService.readFriends(),
     })
 
     const viewUserModal = useDisclosure()
@@ -41,11 +39,15 @@ import {
       setSelectedUser(user)
       viewUserModal.onOpen()
     }
+
+    const processDate = (date: Date) => {
+        return date.toLocaleString()
+    }
   
     return (
       <>
         <Tbody>
-          {users.data.map((user) => (
+          {users.map((user) => (
             <Tr key={user.id} onClick={() => selectUser(user)}>
               <Td color={!user.full_name ? "ui.dim" : "inherit"}>
                 {user.full_name || "N/A"}
@@ -56,19 +58,7 @@ import {
                 )}
               </Td>
               <Td>{user.email}</Td>
-              <Td>{user.is_superuser ? "Superuser" : "User"}</Td>
-              <Td>
-                <Flex gap={2}>
-                  <Box
-                    w="2"
-                    h="2"
-                    borderRadius="50%"
-                    bg={user.is_active ? "ui.success" : "ui.danger"}
-                    alignSelf="center"
-                  />
-                  {user.is_active ? "Active" : "Inactive"}
-                </Flex>
-              </Td>
+              <Td>{processDate(new Date(user.friends_since))}</Td>
             </Tr>
           ))}
         </Tbody>
@@ -76,7 +66,7 @@ import {
             user={selectedUser as UserPublic}
             isOpen={viewUserModal.isOpen}
             onClose={viewUserModal.onClose}
-            isFriendList={false}
+            isFriendList={true}
         />
       </>
     )
@@ -100,7 +90,7 @@ import {
     return (
       <Container maxW="full">
         <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
-          User List
+          Friends List
         </Heading>
         <TableContainer>
           <Table fontSize="md" size={{ base: "sm", md: "md" }}>
@@ -108,8 +98,7 @@ import {
               <Tr>
                 <Th width="20%">Full name</Th>
                 <Th width="50%">Email</Th>
-                <Th width="10%">Role</Th>
-                <Th width="10%">Status</Th>
+                <Th width="10%">Friends since</Th>
               </Tr>
             </Thead>
             <Suspense fallback={<MembersBodySkeleton />}>

@@ -1,5 +1,5 @@
 import sentry_sdk
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
@@ -34,4 +34,6 @@ if settings.BACKEND_CORS_ORIGINS:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
-app.add_websocket_route("/ws", websocket_endpoint)
+@app.websocket("/ws/{user_id}")
+async def websocket_route(websocket: WebSocket, user_id: int):
+    await websocket_endpoint(websocket, user_id)

@@ -33,6 +33,7 @@ class UserUpdate(UserBase):
 class UserUpdateMe(SQLModel):
     full_name: str | None = Field(default=None, max_length=255)
     email: EmailStr | None = Field(default=None, max_length=255)
+    status: str | None = Field(default=None, max_length=255)
 
 
 class UpdatePassword(SQLModel):
@@ -145,5 +146,9 @@ class Friend(FriendBase, table=True):
     __table_args__ = (CheckConstraint('user1 < user2', name='check_user1_less_than_user2'),)
 
 class RequestSent(SQLModel):
+    sender_id: int
+    receiver_id: int
+
+class AcceptRequest(SQLModel):
     sender_id: int
     receiver_id: int

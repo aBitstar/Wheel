@@ -43,6 +43,7 @@ const UserInformation = () => {
     defaultValues: {
       full_name: currentUser?.full_name,
       email: currentUser?.email,
+      status: currentUser?.status,
     },
   })
 
@@ -129,6 +130,27 @@ const UserInformation = () => {
             )}
             {errors.email && (
               <FormErrorMessage>{errors.email.message}</FormErrorMessage>
+            )}
+          </FormControl>
+          <FormControl>
+            <FormLabel color={color} htmlFor="status">
+              Status
+            </FormLabel>
+            {editMode ? (
+              <Input
+                id="status"
+                {...register("status", { maxLength: 90 })}
+                type="text"
+                size="md"
+              />
+            ) : (
+              <Text
+                size="md"
+                py={2}
+                color={!currentUser?.status ? "ui.dim" : "inherit"}
+              >
+                {currentUser?.status || "N/A"}
+              </Text>
             )}
           </FormControl>
           <Flex mt={4} gap={3}>

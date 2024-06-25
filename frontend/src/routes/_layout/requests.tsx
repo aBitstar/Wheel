@@ -11,13 +11,15 @@ import {
     Thead,
     Tr,
   } from "@chakra-ui/react"
-  import { useSuspenseQuery } from "@tanstack/react-query"
+  import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
   import { createFileRoute } from "@tanstack/react-router"
   
-  import { Suspense } from "react"
+  import { Suspense, useState } from "react"
   import { ErrorBoundary } from "react-error-boundary"
-  import { RequestService } from "../../client"
+  import { ApiError, RequestService, UserPublic } from "../../client"
   import RequestActions from "../../components/Requests/RequestActions"
+  import { AcceptFriends } from "../../client/models"
+import useCustomToast from "../../hooks/useCustomToast"
   
   export const Route = createFileRoute("/_layout/requests")({
     component: Requests,
@@ -28,17 +30,70 @@ import {
       queryKey: ["requests"],
       queryFn: () => RequestService.getRequests(),
     })
-    console.log(requests);
+
+    const queryClient = useQueryClient()
+    const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
+
+    const [FriendRequests, setFriendRequests] = useState(requests)
+
+    const showToast = useCustomToast()
+
+    const mutation = useMutation({
+      mutationFn: (data: AcceptFriends) =>
+        RequestService.acceptRequest(data),
+      onSuccess: (data) => {
+        showToast("Congratulations!", "You accepted Friend Request.", "success")
+        // reset()
+        setFriendRequests(data)
+      },
+      onError: (err: ApiError) => {
+        const errDetail = (err.body as any)?.detail
+        showToast("Something went wrong.", `${errDetail}`, "error")
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: ["friend_requests"] })
+      },
+    })
+
+    const declineMutation = useMutation({
+      mutationFn: (data: AcceptFriends) =>
+        RequestService.acceptRequest(data),
+      onSuccess: (data) => {
+        showToast("Oops!", "You declined Friend Request.", "warning")
+        // reset()
+        setFriendRequests(data)
+      },
+      onError: (err: ApiError) => {
+        const errDetail = (err.body as any)?.detail
+        showToast("Something went wrong.", `${errDetail}`, "error")
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: ["friend_requests"] })
+      },
+    })
+
+    const onAccept = async (sender_id: number, receiver_id = currentUser?.id) => {
+      
+      mutation.mutate(
+        {sender_id, receiver_id}
+      )
+    }
+
+    const onDecline = async (sender_id: number, receiver_id = currentUser?.id) => {
+      declineMutation.mutate(
+        {sender_id, receiver_id}
+      )
+    }
   
     return (
       <Tbody>
-        {requests.map((request, index) => (
+        {FriendRequests.map((request, index) => (
           <Tr key={request.id}>
             <Td>{index + 1}</Td>
             <Td>{request.sender_name}</Td>
             <Td>{request.sender_email}</Td>
             <Td>
-              <RequestActions />
+              <RequestActions onAccept={() => onAccept(request.sender_id)} onDecline={() => onDecline(request.sender_id)}/>
             </Td>
           </Tr>
         ))}

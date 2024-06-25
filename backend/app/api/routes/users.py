@@ -12,6 +12,7 @@ from app.api.deps import (
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
 from app.models import (
+    Friend,
     Item,
     Message,
     UpdatePassword,
@@ -24,13 +25,14 @@ from app.models import (
     UserUpdateMe,
 )
 from app.utils import generate_new_account_email, send_email
+from app.websocket.websocket import broadcast_to_friends
 
 router = APIRouter()
 
 
 @router.get(
     "/",
-    dependencies=[Depends(get_current_active_superuser)],
+    # dependencies=[Depends(get_current_active_superuser)],
     response_model=UsersPublic,
 )
 def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
@@ -75,7 +77,7 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
 
 
 @router.patch("/me", response_model=UserPublic)
-def update_user_me(
+async def update_user_me(
     *, session: SessionDep, user_in: UserUpdateMe, current_user: CurrentUser
 ) -> Any:
     """
@@ -88,6 +90,15 @@ def update_user_me(
             raise HTTPException(
                 status_code=409, detail="User with this email already exists"
             )
+    
+    #Check if there's status update
+    if user_in.status != current_user.status:
+        #Then Find all the friends of the user
+        friend_ids_subquery1 = select(Friend.user2).where(Friend.user1 == current_user.id)
+        friend_ids_subquery2 = select(Friend.user1).where(Friend.user2 == current_user.id)
+        friend_ids = friend_ids_subquery1.union(friend_ids_subquery2).subquery()
+        friends = session.exec(select(friend_ids.c[0])).all()
+        await broadcast_to_friends(friends, f"{current_user.full_name} changed status!")
     user_data = user_in.model_dump(exclude_unset=True)
     current_user.sqlmodel_update(user_data)
     session.add(current_user)

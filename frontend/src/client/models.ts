@@ -88,6 +88,7 @@ export type UserPublic = {
 	is_superuser?: boolean;
 	full_name?: string | null;
 	id: number;
+	status?: string;
 };
 
 
@@ -146,4 +147,24 @@ export type SendRequest = {
 	sender_id: number | undefined;
 	receiver_id: number;
 }
+
+export type AcceptFriends = {
+	sender_id: number;
+	receiver_id: number | undefined;
+}
+
+export type FriendRequestsAndReceiver = {
+	friend_requests: FriendRequests
+	receiver_name: string
+}
+
+export type Friend = {
+	full_name: string
+	email: string
+	id: number
+	status: string
+	friends_since: string
+}
+
+export type Friends = Array<Friend>
 

@@ -28,25 +28,13 @@ import {
     user: UserPublic
     isOpen: boolean
     onClose: () => void
+    isFriendList: boolean
   }
   
-  const ViewUser = ({ user, isOpen, onClose }: ViewUserProps) => {
+  const ViewUser = ({ user, isOpen, onClose, isFriendList }: ViewUserProps) => {
     const queryClient = useQueryClient()
     const showToast = useCustomToast()
     const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
-
-  
-    // const {
-    //   register,
-    //   handleSubmit,
-    //   reset,
-    //   getValues,
-    //   formState: { isSubmitting },
-    // } = useForm<UserUpdateForm>({
-    //   mode: "onBlur",
-    //   criteriaMode: "all",
-    //   defaultValues: user,
-    // })
   
     const mutation = useMutation({
       mutationFn: (data: SendRequest) =>
@@ -87,7 +75,7 @@ import {
         >
           <ModalOverlay />
           <ModalContent>
-            <ModalHeader>{user.id === currentUser?.id ? 'Your ' : 'User '} Information</ModalHeader>
+            <ModalHeader>{user.id === currentUser?.id ? "Your " : isFriendList ? "Friend's " : "User "} Information</ModalHeader>
             <ModalCloseButton />
             <ModalBody pb={6}>
                 <VStack
@@ -96,22 +84,22 @@ import {
                     align='stretch'
                 >
                     <Container>
-                        <Heading as='h2' size='sm'>User Name</Heading>
+                        <Heading as='h2' size='sm'>{isFriendList ? "Friend's Name" : "User Name"}</Heading>
                         <Text fontSize='xl'>{user.full_name}</Text>
                     </Container>
                     <Container>
-                        <Heading as='h2' size='sm'>User Email</Heading>
+                        <Heading as='h2' size='sm'>{isFriendList ? "Friend's Email" : "User Email"}</Heading>
                         <Text fontSize='xl'>{user.email}</Text>
                     </Container>
                     <Container>
-                        <Heading as='h2' size='sm'>User Role</Heading>
-                        <Text fontSize='xl'>{user.is_superuser ? 'Admin' : 'User'}</Text>
+                        <Heading as='h2' size='sm'>{isFriendList ? "Friend's Status" : "User Status"}</Heading>
+                        <Text fontSize='xl'>{user.status || "N/A"}</Text>
                     </Container>
                 </VStack>
             </ModalBody>
   
             <ModalFooter gap={3}>
-                {user.id !== currentUser?.id &&
+                {user.id !== currentUser?.id || !isFriendList &&
                     <Button
                         variant="primary"
                         type="submit"

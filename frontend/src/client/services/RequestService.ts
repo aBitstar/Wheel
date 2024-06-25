@@ -1,5 +1,5 @@
 import type { CancelablePromise } from "../core/CancelablePromise";
-import { FriendRequests, SendRequest } from "../models";
+import { AcceptFriends, FriendRequests, Friends, SendRequest } from "../models";
 import { request as __request } from '../core/request';
 import { OpenAPI } from '../core/OpenAPI';
 
@@ -25,6 +25,38 @@ export class RequestService {
       method: "POST",
       body: data,
       url: "/api/v1/friend/send-request",
+      errors: {
+        422: `Validation Error`,
+      },
+    });
+  }
+
+  public static acceptRequest( data: AcceptFriends): CancelablePromise<FriendRequests> {
+    return __request(OpenAPI, {
+      method: "POST",
+      body: data,
+      url: "/api/v1/friend/accept-request",
+      errors: {
+        422: `Validation Error`,
+      },
+    });
+  }
+
+  public static declineRequest( data: AcceptFriends): CancelablePromise<FriendRequests> {
+    return __request(OpenAPI, {
+      method: "POST",
+      body: data,
+      url: "/api/v1/friend/decline-request",
+      errors: {
+        422: `Validation Error`,
+      },
+    });
+  }
+
+  public static readFriends(): CancelablePromise<Friends> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/friend/myfriends",
       errors: {
         422: `Validation Error`,
       },
