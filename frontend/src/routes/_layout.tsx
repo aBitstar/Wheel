@@ -34,7 +34,7 @@ function Layout() {
       const websocket = WebSocketService.connect(currentUser.id);
       if (websocket) {
         websocket.onmessage = (event: any) => {
-        showToast("Success!", event.data, "info");
+        showToast("", event.data, "info");
         };
       }
     }

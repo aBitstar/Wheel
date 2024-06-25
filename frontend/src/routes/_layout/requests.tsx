@@ -57,7 +57,7 @@ import useCustomToast from "../../hooks/useCustomToast"
 
     const declineMutation = useMutation({
       mutationFn: (data: AcceptFriends) =>
-        RequestService.acceptRequest(data),
+        RequestService.declineRequest(data),
       onSuccess: (data) => {
         showToast("Oops!", "You declined Friend Request.", "warning")
         // reset()

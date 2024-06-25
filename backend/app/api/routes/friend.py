@@ -5,17 +5,22 @@ from sqlmodel import select
 from sqlalchemy.orm import aliased
 
 from app.api.deps import CurrentUser, SessionDep
-from app.models import AcceptRequest, Friend, FriendRequest, RequestSent, User
-from app.websocket.websocket import accept_friend, broadcast_message, decline_friend, send_request
+from app.models import AcceptRequest, Friend, FriendPublic, FriendRequest, FriendRequestPublic, RequestSent, User, UsersPublic
+from app.websocket.websocket import accept_friend, decline_friend, send_Request
 
 router = APIRouter()
 
 friend_requests = {}
 friend_accepts = {}
 
-@router.post('/send-request')
-async def send_request(request: RequestSent, session: SessionDep):
-    if request.sender_id == request.receiver_id:
+@router.post('/send-request', response_model=FriendRequest)
+async def send_request(request: RequestSent, session: SessionDep, currentUser: CurrentUser):
+    """
+    Send Friend Request
+    Send friend request to a user and returns the request.
+    """
+
+    if currentUser.id == request.receiver_id:
         raise HTTPException(status_code=400, detail="You can't send request to yourself")
     # Check if sender or receiver exists
     from_user = session.get(User, request.sender_id)
@@ -31,14 +36,16 @@ async def send_request(request: RequestSent, session: SessionDep):
     else:
         user1 = request.sender_id
         user2 = request.receiver_id
-    existing_friends = session.exec(select(Friend).where(Friend.user1 == user1, Friend.user2 == user2))
+    existing_friends = session.exec(select(Friend).where(Friend.user1 == user1, Friend.user2 == user2)).first()
+    print(existing_friends, ' ')
     if existing_friends:
         raise HTTPException(status_code=400, detail="You are already friends!")
 
     # Check if the request exists
     existing_request = session.exec(select(FriendRequest).where(
         FriendRequest.sender_id == request.sender_id,
-        FriendRequest.receiver_id == request.receiver_id
+        FriendRequest.receiver_id == request.receiver_id,
+        FriendRequest.status == 'pending'
     )).first()
     if existing_request:
         raise HTTPException(status_code=400, detail="Friend request already sent")
@@ -49,11 +56,16 @@ async def send_request(request: RequestSent, session: SessionDep):
     # sending the request
     sender = session.exec(select(User).where(User.id == request.sender_id)).first()
     friend_requests[request.receiver_id] = request.sender_id
-    await send_request(request.receiver_id, f"New friend request from {sender.full_name}")
+    await send_Request(request.receiver_id, f"New friend request from {sender.full_name}")
     return friend_request
 
-@router.post('/accept-request')
+@router.post('/accept-request', response_model=list[FriendRequestPublic])
 async def accept_request(request: AcceptRequest, session: SessionDep, currentUser: CurrentUser):
+    """
+    Accept a friend request
+    Accept a friend request, notify the request sender and returns updated requests list.
+    """
+
     existing_request = session.exec(select(FriendRequest).where(
         FriendRequest.sender_id == request.sender_id,
         FriendRequest.receiver_id == request.receiver_id,
@@ -68,7 +80,7 @@ async def accept_request(request: AcceptRequest, session: SessionDep, currentUse
     else:
         user1 = request.sender_id
         user2 = request.receiver_id
-    existing_friends = session.exec(select(Friend).where(Friend.user1 == user1, Friend.user2 == user2))
+    existing_friends = session.exec(select(Friend).where(Friend.user1 == user1, Friend.user2 == user2)).first()
     if existing_friends:
         raise HTTPException(status_code=400, detail="You are already friends!")
 
@@ -106,8 +118,13 @@ async def accept_request(request: AcceptRequest, session: SessionDep, currentUse
     return requests
 
 
-@router.post('/decline-request')
+@router.post('/decline-request', response_model=list[FriendRequestPublic])
 async def decline_request(request: AcceptRequest, session: SessionDep, currentUser: CurrentUser):
+    """
+    Decline a friend request
+    Decline a friend request, notify the request sender and returns updated requests list.
+    """
+
     existing_request = session.exec(select(FriendRequest).where(
         FriendRequest.sender_id == request.sender_id,
         FriendRequest.receiver_id == request.receiver_id,
@@ -144,8 +161,13 @@ async def decline_request(request: AcceptRequest, session: SessionDep, currentUs
         requests.append(request_dict)
     return requests
 
-@router.get('/requests-me')
+@router.get('/requests-me', response_model=list[FriendRequestPublic])
 def get_requests_to_me(session: SessionDep, currentUser: CurrentUser):
+    """
+    Retrieve all freind requests sent to the current user.
+    Returns a list of all friend requests with names and emails of request senders.
+    """
+
     results = session.exec(select(FriendRequest, User).join(User, User.id == FriendRequest.sender_id)
     .where(
         FriendRequest.receiver_id == currentUser.id,
@@ -164,8 +186,13 @@ def get_requests_to_me(session: SessionDep, currentUser: CurrentUser):
         requests.append(request_dict)
     return requests
 
-@router.get('/myfriends')
+@router.get('/myfriends', response_model=list[FriendPublic])
 def get_all_my_friends(session: SessionDep, currentUser: CurrentUser):
+    """
+    Retrieve all accepted friends of current user.
+    Returns a list of all friends with their names, emails and the dates of accepting friend requests.
+    """
+
     friends1 = session.exec(select(Friend, User)
                             .join(Friend, Friend.user2 == User.id)
                             .where(Friend.user1 == currentUser.id)).all()
@@ -176,7 +203,7 @@ def get_all_my_friends(session: SessionDep, currentUser: CurrentUser):
     print(friends, ' ')
     friend_list = []
     for friend, user in friends:
-        friend = {
+        friend: FriendPublic = {
             "id": user.id,
             "full_name": user.full_name,
             "email": user.email,

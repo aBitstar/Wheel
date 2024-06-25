@@ -17,9 +17,9 @@ async def broadcast_message(message: str):
 
 async def broadcast_to_friends(friends: list, message: str):
     for friend_id in friends:
-        await send_request(friend_id, message)
+        await send_Request(friend_id, message)
 
-async def send_request(receiver_id: int, message: str):
+async def send_Request(receiver_id: int, message: str):
     if receiver_id in active_connections:
         await active_connections[receiver_id].send_text(message)
 

@@ -123,7 +123,6 @@ class FriendRequestBase(SQLModel):
     sender_id: int
     receiver_id: int
 
-
 class FriendRequest(FriendRequestBase, table=True):
     id: int = Field(default=None, primary_key=True, index=True)
     sender_id: int = Field(foreign_key="user.id")
@@ -133,6 +132,14 @@ class FriendRequest(FriendRequestBase, table=True):
     receiver: User = Relationship(back_populates="received_requests", sa_relationship_kwargs={"foreign_keys": "[FriendRequest.receiver_id]"})
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow},)
+
+class FriendRequestPublic(SQLModel):
+    id: int
+    sender_id: int
+    receiver_id: int
+    status: str
+    sender_name: str
+    sender_email: EmailStr
 
 class FriendBase(SQLModel):
     user1: int
@@ -152,3 +159,10 @@ class RequestSent(SQLModel):
 class AcceptRequest(SQLModel):
     sender_id: int
     receiver_id: int
+
+class FriendPublic(SQLModel):
+    id: int
+    email: EmailStr
+    status: str
+    full_name: str
+    friends_since: datetime

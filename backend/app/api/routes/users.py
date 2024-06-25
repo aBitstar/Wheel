@@ -8,6 +8,7 @@ from app.api.deps import (
     CurrentUser,
     SessionDep,
     get_current_active_superuser,
+    get_current_user,
 )
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
@@ -32,7 +33,7 @@ router = APIRouter()
 
 @router.get(
     "/",
-    # dependencies=[Depends(get_current_active_superuser)],
+    dependencies=[Depends(get_current_user)],
     response_model=UsersPublic,
 )
 def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
@@ -82,6 +83,7 @@ async def update_user_me(
 ) -> Any:
     """
     Update own user.
+    If the user only updates status, then broadcast message to the friends and return the current user
     """
 
     if user_in.email:

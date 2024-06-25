@@ -99,7 +99,7 @@ import {
             </ModalBody>
   
             <ModalFooter gap={3}>
-                {user.id !== currentUser?.id || !isFriendList &&
+                {user.id !== currentUser?.id && !isFriendList &&
                     <Button
                         variant="primary"
                         type="submit"
